@@ -1,0 +1,234 @@
+
+<html>
+<head>
+    <title>Render</title>
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
+    <script type="text/javascript">
+        var person = {
+            x: 15,
+            y: 15,
+            a: Math.PI / 2
+        };
+        var map =
+                ["####################",
+                 "#..#.#....#..#.#...#",
+                 "#...#..##.#..#.#.#.#",
+                 "#.#..#....#..#.#...#",
+                 "#....##...#..#.#.#.#",
+                 "#.#..#.......#.#...#",
+                 "#...##.#.#...#.#...#",
+                 "##.....#.#...#.#.#.#",
+                 "##..#..#.#...#.#...#",
+                 "#..................#",
+                 "#.......########.#.#",
+                 "#..#.#...##....#...#",
+                 "#...#..#.....#.#...#",
+                 "#.#..#...##..#.#.#.#",
+                 "#....##..##..#.#...#",
+                 "#.#..#.........#...#",
+                 "#...##.#.##..#.#.#.#",
+                 "##.....#.##..#.#...#",
+                 "##..#..#.##..#.#...#",
+                 "####################"];
+
+        var img = new Image();
+        img.src = 'wall.jpg';
+
+        var img2 = new Image();
+        img2.src = 'wall2.jpg';
+
+        var sky = new Image();
+        sky.src = 'sky.jpg';
+
+        function updateResult(result, dx, dy, color, texture) {
+            var len_old = result.dx * result.dx + result.dy * result.dy;
+            var len_new = dx * dx + dy * dy;
+            if (len_new < len_old) {
+                result.dx = dx;
+                result.dy = dy;
+                result.color = color;
+                result.texture = texture / 10 - Math.floor(texture / 10);
+            }
+        }
+
+        function rayCast(x) {
+            var du = Math.atan(x);
+            var rx = Math.cos(du + person.a);
+            var ry = Math.sin(du + person.a);
+
+            var result = {
+                dx: rx * 200,
+                dy: ry * 200,
+                rx: rx,
+                ry: ry,
+                color: "black",
+                texture: 0
+            };
+
+            for (var j = 0; j < map.length; j++) {
+                for (var i = 0; i < map[j].length; i++) {
+                    if (map[j][i] == "#") {
+                        var line_y = j * 10 - person.y;
+                        if (line_y * ry > 0) {
+                            var ix = rx / ry * line_y + person.x;
+
+                            if (ix > i * 10 && ix < i * 10 + 10) {
+                                updateResult(result, line_y / ry * rx, line_y, "green", i * 10 + 10 - ix);
+                            }
+                        }
+
+                        line_y = (j + 1) * 10 - person.y;
+                        if (line_y * ry > 0) {
+                            var ix = rx / ry * line_y + person.x;
+
+                            if (ix > i * 10 && ix < i * 10 + 10) {
+                                updateResult(result, line_y / ry * rx, line_y, "orange", i * 10 + 10 - ix);
+                            }
+                        }
+
+                        var line_x = i * 10 - person.x;
+                        if (line_x * rx > 0) {
+                            var iy = ry / rx * line_x + person.y;
+
+                            if (iy > j * 10 && iy < j * 10 + 10) {
+                                updateResult(result, line_x, line_x / rx * ry, "yellow", j * 10 + 10 - iy);
+                            }
+                        }
+
+                        var line_x = (i + 1) * 10 - person.x;
+                        if (line_x * rx > 0) {
+                            var iy = ry / rx * line_x + person.y;
+
+                            if (iy > j * 10 && iy < j * 10 + 10) {
+                                updateResult(result, line_x, line_x / rx * ry, "magenta", j * 10 + 10 - iy);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+
+        }
+
+        function drawMap() {
+            var ctx = document.getElementById("map").getContext("2d");
+
+            for (var j = 0; j < map.length; j++) {
+                for (var i = 0; i < map[j].length; i++) {
+                    if (map[j][i] == "#") {
+                        ctx.fillStyle = "red";
+                    } else {
+                        ctx.fillStyle = "white";
+                    }
+                    ctx.fillRect(i * 10, j * 10, 10, 10);
+                }
+            }
+
+
+        }
+        function drawOnMap(result) {
+            var ctx = document.getElementById("map").getContext("2d");
+
+            ctx.strokeStyle = "yellow";
+            ctx.beginPath();
+            ctx.moveTo(person.x, person.y);
+            ctx.lineTo(person.x + result.dx, person.y + result.dy);
+            ctx.stroke();
+        }
+
+        function getWall(result, x) {
+            var du = Math.atan(x);
+            var len = Math.sqrt(result.dx * result.dx + result.dy * result.dy);
+            return 5 / len / Math.cos(du);
+        }
+
+        function drawScene() {
+            drawMap();
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+
+            var dx = -person.a * 50 / sky.width ;
+            dx = dx - Math.floor(dx);
+            ctx.drawImage(sky, dx * canvas.width - canvas.width, 0, canvas.width, canvas.width);
+            ctx.drawImage(sky, dx * canvas.width, 0,canvas.width, canvas.width);
+
+            //ctx.fillStyle = "black";
+            //ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+
+            for (var i = 0; i < canvas.width; i++) {
+                var x = i / (canvas.width / 2) - 1;
+                var result = rayCast(x);
+                drawOnMap(result);
+                var wall = getWall(result, x);
+
+                if (wall != null) {
+                    var y1 = (-wall + 1) * (canvas.height / 2);
+                    var y2 = (wall + 1) * (canvas.height / 2);
+
+                    var len = Math.sqrt(result.dx * result.dx + result.dy * result.dy);
+                    var a = len / 60;
+                    if (a < 0.99) {
+                        var t_x = Math.round(result.texture * (img.width - 1));
+                        ctx.drawImage(img,
+                            t_x, 0, 1, img.height,
+                            i, y1, 1, y2 - y1);
+
+                        ctx.rotate(35 * Math.PI / 180);
+                        ctx.drawImage(img2,
+                                t_x, 0, 1, img.height,
+                                i, y2, 1, y2 - y1);
+                    }
+
+
+                    if (a > 0.01) {
+                        ctx.fillStyle = "rgba(0, 0, 0, " + a + ")";
+                        ctx.fillRect(i, y1, 1, (y2 - y1) * 2 + 1);
+                    }
+                }
+
+            }
+        }
+
+        window.addEventListener("load", function (event) {
+            drawScene();
+        }, false);
+
+        window.addEventListener('keydown', function(event) {
+            switch (event.keyCode) {
+                case 37: // Left
+                    person.a -= 0.1;
+                    drawScene();
+                    break;
+
+                case 38: // Up
+                    person.x += Math.cos(person.a);
+                    person.y += Math.sin(person.a);
+                    drawScene();
+                    break;
+
+                case 39: // Right
+                    person.a += 0.1;
+                    drawScene();
+                    break;
+
+                case 40: // Down
+                    person.x -= Math.cos(person.a);
+                    person.y -= Math.sin(person.a);
+                    drawScene();
+                    break;
+            }
+        }, false);
+    </script>
+</head>
+<body>
+<canvas id="canvas" width="400" height="400"></canvas>
+<canvas id="map" width="400" height="400"></canvas>
+</body>
+</html>
