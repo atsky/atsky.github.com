@@ -58,7 +58,7 @@ Mandelbrot.prototype = {
             pdata[4*i+3] = 255;
             if (values[i] < 0) {
                 pdata[4*i] = pdata[4*i+1] = pdata[4*i+2] = 0;
-            } else {
+            } else{
                 var colour = this.palette[values[i]];
                 pdata[4*i] = colour[0];
                 pdata[4*i+1] = colour[1];

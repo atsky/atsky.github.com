@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Ray tracer</title>
+<script type="text/javascript">
+
+var epsilon = 0.0001;
+
+function GraphicsContext(canvas) {
+    var ctx = canvas.getContext("2d");
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var raw_data = imageData.data;
+
+    return {
+        setPixel: function(x, y, c) {
+            i = (x + y * canvas.width) * 4;
+            raw_data[i] = c[0];
+            raw_data[i + 1] = c[1];
+            raw_data[i + 2] = c[2];
+            raw_data[i + 3] = 255;
+        },
+
+        putImageData: function() {
+            ctx.putImageData(imageData, 0, 0);
+        }
+    }
+}
+
+function Vector(x_0, y_0, z_0) {
+    this.x = x_0;
+    this.y = y_0;
+    this.z = z_0;
+
+}
+
+Vector.prototype = {
+    mull: function(v) {
+        return this.x * v.x + this.y * v.y + this.z * v.z;
+    },
+    minus: function(v) {
+        return new Vector(this.x - v.x, this.y - v.y, this.z - v.z);
+    },
+    len2: function() {
+        return this.x * this.x + this.y * this.y + this.z * this.z;
+    },
+    add_mull: function(v , a) {
+        return new Vector(this.x + v.x * a, this.y + v.y * a, this.z + v.z * a);
+    },
+
+    mull_n: function(a) {
+        return new Vector(this.x * a, this.y * a, this.z * a);
+    },
+    getReflection: function(normal) {
+        return this.add_mull(normal, this.mull(normal) * -2);
+    },
+    normalize: function() {
+        var len = Math.sqrt(this.len2());
+        this.x /= len;
+        this.y /= len;
+        this.z /= len;
+        return this;
+    }
+};
+
+function Sphere(v_0, r_0, color) {
+    this.v = v_0;
+    this.r = r_0;
+    this.color = color;
+}
+
+Sphere.prototype = {
+    getIntersection: function(start, l) {
+        var c = this.v.minus(start);
+        var p = c.mull(l);
+        var l_2 = l.len2();
+        var c_2 = c.len2();
+        var d = p * p - l_2 * (c_2 - this.r * this.r);
+        if (d < 0) {
+            return -1
+        }
+        var r1 = (p - Math.sqrt(d)) / l_2;
+
+        if (r1 > 0) {
+            return r1;
+        }
+
+        return (p + Math.sqrt(d)) / l_2;
+    },
+    getNormalAt: function(p) {
+        return p.minus(this.v).normalize();
+    },
+    getColorAt: function(p) {
+        return this.color;
+    }
+};
+
+function Plane(c, n_0) {
+    this.center = c;
+    this.n = n_0;
+}
+
+Plane.prototype = {
+    getIntersection: function(start, l) {
+        var p = l.mull(this.n);
+        if (p == 0) {
+            return -1;
+        }
+        return -this.center.minus(start).mull(this.n) / p;
+    },
+    getNormalAt: function(p) {
+        return this.n;
+    },
+    getColorAt: function(p) {
+        if ((Math.floor(p.x / 10) + Math.floor(p.z / 10)) % 2 == 0) {
+            return [0, 0, 0];
+        } else {
+            return [255, 255, 255];
+        }
+    }
+};
+
+function getIntersection(set, vector, start) {
+    var result = null;
+    for (var i = 0; i < set.length; i++) {
+        var d = set[i].getIntersection(start, vector);
+        if (d > -epsilon) {
+            var p = start.add_mull(vector, d);
+            if (set[i].getNormalAt(p).mull(vector) < 0) {
+                if (result == null || result.d > d) {
+                    result = {
+                        d: d,
+                        s: set[i]
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+var scene = [
+    new Sphere(new Vector(-5, 3, 13), 5, [255,   0,   0]),
+    new Sphere(new Vector(5, 3, 13), 5,  [  0, 255,   0]),
+    new Sphere(new Vector(0, 3, 19), 5,  [  0,   0, 255]),
+    new Sphere(new Vector(0, -5, 15), 5, [255, 255,   0]),
+    new Plane(new Vector(0, -7, 0), new Vector(0, -1, 0))
+];
+
+function trace(start, vector, i) {
+    if (i > 6) {
+        return [0, 0, 0];
+    }
+    var t = Math.sqrt(1/3);
+    var light = new Vector(-t, t, t);
+    var intersection = getIntersection(scene, vector, start);
+
+    if (intersection != null) {
+        var p = start.add_mull(vector, intersection.d - epsilon);
+        var c = intersection.s.getColorAt(p);
+        var shadow = getIntersection(scene, light.mull_n(-1), p);
+        var normal = intersection.s.getNormalAt(p);
+        if (shadow != null) {
+            var t = 1 / shadow.d * 2;
+            if (t > 1) {
+                t = 1;
+            }
+            t = 0.5 - t / 2;
+            c = [c[0] * t, c[1] * t, c[2] * t];
+        } else {
+            var cos = 1;
+            if (!(intersection.s instanceof Plane)) {
+                cos = Math.abs(normal.mull(light));
+                c = [c[0] * cos, c[1] * cos, c[2] * cos];
+
+                cos = -vector.mull(light.getReflection(normal)) / Math.sqrt(vector.len2());
+                if (cos > 0) {
+                    cos = Math.pow(cos, 10);
+                    c = [c[0] + 255 * cos, c[1] + 255 * cos, c[2] + 255 * cos];
+                }
+            }
+        }
+
+        var c2 = trace(p, vector.getReflection(normal), i + 1);
+        //var c3 = trace(p.add_mull(vector, epsilon * 2), vector, i + 1);
+
+        return [
+            (c[0] + c2[0]) / 2,
+            (c[1] + c2[1]) / 2,
+            (c[2] + c2[2]) / 2];
+    }
+
+    return [0, 0, 0];
+}
+
+function draw() {
+    var canvas = document.getElementById("canvas");
+    var context = new GraphicsContext(canvas);
+
+    for (var i = 0; i < canvas.width; i++) {
+        for (var j = 0; j < canvas.height; j++) {
+            var vector = new Vector((i / canvas.width * 2) - 1, (j / canvas.height * 2) - 1, 1);
+            var start = new Vector(0, 0, 0);
+            c = trace(start, vector, 0);
+            context.setPixel(i, j, c);
+        }
+    }
+
+    context.putImageData();
+}
+
+        window.addEventListener("load", function (event) {
+            draw();
+        }, false);
+
+</script>
+</head>
+<body>
+<div align=center>
+    <canvas id="canvas" width="600" height="600"></canvas>
+</div>
+</body>
+</html>
