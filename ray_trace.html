@@ -103,10 +103,10 @@ function Plane(c, n_0) {
 Plane.prototype = {
     getIntersection: function(start, l) {
         var p = l.mull(this.n);
-        if (p == 0) {
+        if (p >= 0) {
             return -1;
         }
-        return -this.center.minus(start).mull(this.n) / p;
+        return this.center.minus(start).mull(this.n) / p;
     },
     getNormalAt: function(p) {
         return this.n;
@@ -144,8 +144,11 @@ var scene = [
     new Sphere(new Vector(5, 3, 13), 5,  [  0, 255,   0]),
     new Sphere(new Vector(0, 3, 19), 5,  [  0,   0, 255]),
     new Sphere(new Vector(0, -5, 15), 5, [255, 255,   0]),
-    new Plane(new Vector(0, -7, 0), new Vector(0, -1, 0))
+    new Plane(new Vector(0, 8, 0), new Vector(0, -1, 0))
 ];
+
+var x = 0;
+var y = 0;
 
 function trace(start, vector, i) {
     if (i > 6) {
@@ -193,14 +196,22 @@ function trace(start, vector, i) {
     return [0, 0, 0];
 }
 
+var p = {
+    x: 0,
+    y: 0
+};
+
 function draw() {
     var canvas = document.getElementById("canvas");
     var context = new GraphicsContext(canvas);
 
     for (var i = 0; i < canvas.width; i++) {
         for (var j = 0; j < canvas.height; j++) {
-            var vector = new Vector((i / canvas.width * 2) - 1, (j / canvas.height * 2) - 1, 1);
-            var start = new Vector(0, 0, 0);
+            var v0 = new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5));
+            var vX = new Vector(Math.cos(p.x / 5),  0, Math.sin(p.x / 5));
+            var vY = new Vector(0,1,0);
+            var vector = v0.add_mull(vX, (i / canvas.width * 2) - 1).add_mull(vY, (j / canvas.height * 2) - 1);
+            var start = new Vector(0, p.y, 15).add_mull(new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5)), -20);
             c = trace(start, vector, 0);
             context.setPixel(i, j, c);
         }
@@ -209,9 +220,33 @@ function draw() {
     context.putImageData();
 }
 
-        window.addEventListener("load", function (event) {
+window.addEventListener("load", function (event) {
+    draw();
+}, false);
+
+window.addEventListener('keydown', function(event) {
+    switch (event.keyCode) {
+        case 37: // Left
+            p.x -= 1;
             draw();
-        }, false);
+        break;
+
+        case 38: // Up
+             p.y -= 1;
+             draw();
+        break;
+
+        case 39: // Right
+             p.x += 1;
+             draw();
+        break;
+
+        case 40: // Down
+             p.y += 1;
+             draw();
+        break;
+    }
+}, false);
 
 </script>
 </head>
