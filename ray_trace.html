@@ -13,6 +13,8 @@ function GraphicsContext(canvas) {
     var raw_data = imageData.data;
 
     return {
+        ctx:ctx,
+
         setPixel: function(x, y, c) {
             i = (x + y * canvas.width) * 4;
             raw_data[i] = c[0];
@@ -115,7 +117,9 @@ Plane.prototype = {
         if ((Math.floor(p.x / 10) + Math.floor(p.z / 10)) % 2 == 0) {
             return [0, 0, 0];
         } else {
-            return [255, 255, 255];
+            var len = Math.sqrt(p.minus(this.center).len2());
+            var c = 300 * 20 / (20 + len);
+            return [c, c, c];
         }
     }
 };
@@ -147,8 +151,6 @@ var scene = [
     new Plane(new Vector(0, 8, 0), new Vector(0, -1, 0))
 ];
 
-var x = 0;
-var y = 0;
 
 function trace(start, vector, i) {
     if (i > 6) {
@@ -164,11 +166,11 @@ function trace(start, vector, i) {
         var shadow = getIntersection(scene, light.mull_n(-1), p);
         var normal = intersection.s.getNormalAt(p);
         if (shadow != null) {
-            var t = 1 / shadow.d * 2;
+            var t = 3 / shadow.d;
             if (t > 1) {
                 t = 1;
             }
-            t = 0.5 - t / 2;
+            t = 1 - t;
             c = [c[0] * t, c[1] * t, c[2] * t];
         } else {
             var cos = 1;
@@ -197,27 +199,58 @@ function trace(start, vector, i) {
 }
 
 var p = {
-    x: 0,
+    x: 1.5,
     y: 0
 };
+
+var row = 0;
 
 function draw() {
     var canvas = document.getElementById("canvas");
     var context = new GraphicsContext(canvas);
 
-    for (var i = 0; i < canvas.width; i++) {
-        for (var j = 0; j < canvas.height; j++) {
+    for (var i = row; i < canvas.width; i += 1) {
+        for (var j = 0; j < canvas.height; j += 1) {
             var v0 = new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5));
             var vX = new Vector(Math.cos(p.x / 5),  0, Math.sin(p.x / 5));
             var vY = new Vector(0,1,0);
             var vector = v0.add_mull(vX, (i / canvas.width * 2) - 1).add_mull(vY, (j / canvas.height * 2) - 1);
             var start = new Vector(0, p.y, 15).add_mull(new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5)), -20);
-            c = trace(start, vector, 0);
-            context.setPixel(i, j, c);
+            var c = trace(start, vector, 0);
+            context.setPixel(i, j, c)
+        }
+        if (i > row + 10) {
+             break;
+        }
+    }
+    row += 10;
+
+    context.putImageData();
+    if (row < canvas.width) {
+        setTimeout(draw, 10);
+    }
+}
+
+function drawFast() {
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+
+
+    for (var i = 0; i < canvas.width; i += 10) {
+        for (var j = 0; j < canvas.height; j += 10) {
+            var v0 = new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5));
+            var vX = new Vector(Math.cos(p.x / 5),  0, Math.sin(p.x / 5));
+            var vY = new Vector(0,1,0);
+            var vector = v0.add_mull(vX, (i / canvas.width * 2) - 1).add_mull(vY, (j / canvas.height * 2) - 1);
+            var start = new Vector(0, p.y, 15).add_mull(new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5)), -20);
+            var c = trace(start, vector, 0);
+            ctx.fillStyle = "rgb(" + Math.round(c[0]) + ", " + Math.round(c[1]) + ", " + Math.round(c[2]) + ")";
+            ctx.fillRect(i, j, 10, 10);
         }
     }
 
-    context.putImageData();
+    row = 0;
+    setTimeout(draw, 10);
 }
 
 window.addEventListener("load", function (event) {
@@ -228,22 +261,22 @@ window.addEventListener('keydown', function(event) {
     switch (event.keyCode) {
         case 37: // Left
             p.x -= 1;
-            draw();
+            drawFast();
         break;
 
         case 38: // Up
              p.y -= 1;
-             draw();
+             drawFast();
         break;
 
         case 39: // Right
              p.x += 1;
-             draw();
+             drawFast();
         break;
 
         case 40: // Down
              p.y += 1;
-             draw();
+             drawFast();
         break;
     }
 }, false);
