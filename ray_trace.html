@@ -146,8 +146,8 @@ function getIntersection(set, vector, start) {
 var scene = [
     new Sphere(new Vector(-5, 3, 13), 5, [255,   0,   0]),
     new Sphere(new Vector(5, 3, 13), 5,  [  0, 255,   0]),
-    new Sphere(new Vector(0, 3, 19), 5,  [  0,   0, 255]),
-    new Sphere(new Vector(0, -5, 15), 5, [255, 255,   0]),
+    new Sphere(new Vector(0, 3, 23), 5,  [  0,   0, 255]),
+    new Sphere(new Vector(0, -6, 15), 5, [255, 255,   0]),
     new Plane(new Vector(0, 8, 0), new Vector(0, -1, 0))
 ];
 
@@ -200,7 +200,7 @@ function trace(start, vector, i) {
 
 var p = {
     x: 1.5,
-    y: 0
+    y: 15
 };
 
 var row = 0;
@@ -215,7 +215,7 @@ function draw() {
             var vX = new Vector(Math.cos(p.x / 5),  0, Math.sin(p.x / 5));
             var vY = new Vector(0,1,0);
             var vector = v0.add_mull(vX, (i / canvas.width * 2) - 1).add_mull(vY, (j / canvas.height * 2) - 1);
-            var start = new Vector(0, p.y, 15).add_mull(new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5)), -20);
+            var start = new Vector(0, 0, 15).add_mull(new Vector(Math.sin(p.x / 5), 0, -Math.cos(p.x / 5)), p.y);
             var c = trace(start, vector, 0);
             context.setPixel(i, j, c)
         }
@@ -242,7 +242,7 @@ function drawFast() {
             var vX = new Vector(Math.cos(p.x / 5),  0, Math.sin(p.x / 5));
             var vY = new Vector(0,1,0);
             var vector = v0.add_mull(vX, (i / canvas.width * 2) - 1).add_mull(vY, (j / canvas.height * 2) - 1);
-            var start = new Vector(0, p.y, 15).add_mull(new Vector(-Math.sin(p.x / 5), 0, Math.cos(p.x / 5)), -20);
+            var start = new Vector(0, 0, 15).add_mull(new Vector(Math.sin(p.x / 5), 0, -Math.cos(p.x / 5)), p.y);
             var c = trace(start, vector, 0);
             ctx.fillStyle = "rgb(" + Math.round(c[0]) + ", " + Math.round(c[1]) + ", " + Math.round(c[2]) + ")";
             ctx.fillRect(i, j, 10, 10);
