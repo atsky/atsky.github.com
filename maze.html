@@ -19,22 +19,22 @@
         var map =
                 ["####################",
                  "#..#.#....#..#.#...#",
-                 "#...#..##.#..#.#.#.#",
-                 "#.#..#....#..#.#...#",
-                 "#....##...#..#.#.#.#",
-                 "#.#..#.......#.#...#",
-                 "#...##.#.#...#.#...#",
-                 "##.....#.#...#.#.#.#",
-                 "##..#..#.#...#.#...#",
-                 "#..................#",
-                 "#.......########.#.#",
+                 "#..#...##.#..#.#.#.#",
+                 "#.###.....#..#.#...#",
+                 "#...###...#..#.#.#.#",
+                 "###.#........#.#...#",
+                 "#...####.#...#.#...#",
+                 "###....#.#...#.#.#.#",
+                 "#.####.#.#...#.#...#",
+                 "#......#...........#",
+                 "#..#.#######.###.#.#",
                  "#..#.#...##....#...#",
-                 "#...#..#.....#.#...#",
-                 "#.#..#...##..#.#.#.#",
-                 "#....##..##..#.#...#",
+                 "#..#...#######.#...#",
+                 "#.##.#...#...#.#.#.#",
+                 "#.#..###.##..#.#...#",
                  "#.#..#.........#...#",
                  "#...##.#.##..#.#.#.#",
-                 "##.....#.##..#.#...#",
+                 "###....#.##..#.#...#",
                  "##..#..#.##..#.#...#",
                  "####################"];
 
@@ -79,7 +79,7 @@
                         if (line_y * ry > 0) {
                             var ix = rx / ry * line_y + person.x;
 
-                            if (ix > i * 10 && ix < i * 10 + 10) {
+                            if (ix > i * 10 - 0.001 && ix <= i * 10 + 10 + 0.001) {
                                 updateResult(result, line_y / ry * rx, line_y, "green", i * 10 + 10 - ix);
                             }
                         }
@@ -88,7 +88,7 @@
                         if (line_y * ry > 0) {
                             var ix = rx / ry * line_y + person.x;
 
-                            if (ix > i * 10 && ix < i * 10 + 10) {
+                            if (ix > i * 10 && ix <= i * 10 + 10 + 0.001) {
                                 updateResult(result, line_y / ry * rx, line_y, "orange", i * 10 + 10 - ix);
                             }
                         }
@@ -97,7 +97,7 @@
                         if (line_x * rx > 0) {
                             var iy = ry / rx * line_x + person.y;
 
-                            if (iy > j * 10 && iy < j * 10 + 10) {
+                            if (iy > j * 10 && iy <= j * 10 + 10 + 0.001) {
                                 updateResult(result, line_x, line_x / rx * ry, "yellow", j * 10 + 10 - iy);
                             }
                         }
@@ -106,7 +106,7 @@
                         if (line_x * rx > 0) {
                             var iy = ry / rx * line_x + person.y;
 
-                            if (iy > j * 10 && iy < j * 10 + 10) {
+                            if (iy > j * 10 && iy <= j * 10 + 10 + 0.001) {
                                 updateResult(result, line_x, line_x / rx * ry, "magenta", j * 10 + 10 - iy);
                             }
                         }
@@ -127,7 +127,7 @@
                     } else {
                         ctx.fillStyle = "white";
                     }
-                    ctx.fillRect(i * 10, j * 10, 10, 10);
+                    ctx.fillRect(i * 20, j * 20, 20, 20);
                 }
             }
 
@@ -138,8 +138,8 @@
 
             ctx.strokeStyle = "yellow";
             ctx.beginPath();
-            ctx.moveTo(person.x, person.y);
-            ctx.lineTo(person.x + result.dx, person.y + result.dy);
+            ctx.moveTo(person.x * 2, person.y * 2);
+            ctx.lineTo((person.x + result.dx) * 2, (person.y + result.dy) * 2);
             ctx.stroke();
         }
 
@@ -159,8 +159,8 @@
             ctx.drawImage(sky, dx * canvas.width - canvas.width, 0, canvas.width, canvas.width);
             ctx.drawImage(sky, dx * canvas.width, 0,canvas.width, canvas.width);
 
-            //ctx.fillStyle = "black";
-            //ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
             for (var i = 0; i < canvas.width; i++) {
                 var x = i / (canvas.width / 2) - 1;
@@ -227,7 +227,11 @@
     </script>
 </head>
 <body>
+<div align=center>
+<h1>3D maze</h1>
+
 <canvas id="canvas" width="400" height="400"></canvas>
 <canvas id="map" width="400" height="400"></canvas>
+</div >
 </body>
 </html>
