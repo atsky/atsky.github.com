@@ -19,21 +19,21 @@
         var map =
                 ["####################",
                  "#..#.#....#..#.#...#",
-                 "#..#...##.#..#.#.#.#",
+                 "#..#...##.#..#.#.W.#",
                  "#.###.....#..#.#...#",
-                 "#...###...#..#.#.#.#",
-                 "###.#........#.#...#",
-                 "#...####.#...#.#...#",
-                 "###....#.#...#.#.#.#",
-                 "#.####.#.#...#.#...#",
+                 "#...###...#..#.#.W.#",
+                 "#WW.#........#.#...#",
+                 "#...WWWW.#...#.#...#",
+                 "###....#.#...#.#.W.#",
+                 "#.WWWW.#.#...#.#...#",
                  "#......#...........#",
-                 "#..#.#######.###.#.#",
-                 "#..#.#...##....#...#",
-                 "#..#...#######.#...#",
-                 "#.##.#...#...#.#.#.#",
-                 "#.#..###.##..#.#...#",
-                 "#.#..#.........#...#",
-                 "#...##.#.##..#.#.#.#",
+                 "#..W.WW#####.###.W.#",
+                 "#..W.W...##....#...#",
+                 "#..W...#######.#...#",
+                 "#.WW.#...#...#.#.W.#",
+                 "#.W..###.##..#.#...#",
+                 "#.W..#.........#...#",
+                 "#...##.#.##..#.#.W.#",
                  "###....#.##..#.#...#",
                  "##..#..#.##..#.#...#",
                  "####################"];
@@ -41,21 +41,14 @@
         var img = new Image();
         img.src = 'wall.jpg';
 
+        var wood = new Image();
+        wood.src = 'wood.png';
+
         var img2 = new Image();
         img2.src = 'wall2.jpg';
 
         var sky = new Image();
         sky.src = 'sky.jpg';
-
-        function updateResult(result, dx, dy, texture) {
-            var len_old = result.dx * result.dx + result.dy * result.dy;
-            var len_new = dx * dx + dy * dy;
-            if (len_new < len_old) {
-                result.dx = dx;
-                result.dy = dy;
-                result.textureX = texture / 10 - Math.floor(texture / 10);
-            }
-        }
 
         function rayCast(x) {
             var du = Math.atan(x);
@@ -67,47 +60,41 @@
                 dy: ry * 200,
                 textureX: 0
             };
+            var px = person.x;
+            var py = person.y;
 
-            for (var j = 0; j < map.length; j++) {
-                for (var i = 0; i < map[j].length; i++) {
-                    if (map[j][i] == "#") {
-                        var line_y = j * 10 - person.y;
-                        if (line_y * ry > 0) {
-                            var ix = rx / ry * line_y + person.x;
-
-                            if (ix > i * 10 - 0.001 && ix <= i * 10 + 10 + 0.001) {
-                                updateResult(result, line_y / ry * rx, line_y, i * 10 + 10 - ix);
-                            }
-                        }
-
-                        line_y = (j + 1) * 10 - person.y;
-                        if (line_y * ry > 0) {
-                            var ix = rx / ry * line_y + person.x;
-
-                            if (ix > i * 10 && ix <= i * 10 + 10 + 0.001) {
-                                updateResult(result, line_y / ry * rx, line_y, i * 10 + 10 - ix);
-                            }
-                        }
-
-                        var line_x = i * 10 - person.x;
-                        if (line_x * rx > 0) {
-                            var iy = ry / rx * line_x + person.y;
-
-                            if (iy > j * 10 && iy <= j * 10 + 10 + 0.001) {
-                                updateResult(result, line_x, line_x / rx * ry, j * 10 + 10 - iy);
-                            }
-                        }
-
-                        line_x = (i + 1) * 10 - person.x;
-                        if (line_x * rx > 0) {
-                            var iy = ry / rx * line_x + person.y;
-
-                            if (iy > j * 10 && iy <= j * 10 + 10 + 0.001) {
-                                updateResult(result, line_x, line_x / rx * ry, j * 10 + 10 - iy);
-                            }
-                        }
-                    }
+            for (var k = 0; k < 100; k++) {
+                var i = Math.floor(px / 10);
+                var j = Math.floor(py / 10);
+                if (map[j][i] != ".") {
+                    result.char = map[j][i];
+                    return result;
                 }
+                var ty;
+                if (ry > 0) {
+                    ty = ((j + 1) * 10 - py) / ry;
+                } else {
+                    ty = (j * 10 - py) / ry;
+                }
+
+                var tx;
+                if (rx > 0) {
+                    tx = ((i + 1) * 10 - px) / rx;
+                } else {
+                    tx = (i * 10 - px) / rx;
+                }
+                if (tx > ty) {
+                    px += rx * (ty + 0.001);
+                    py += ry * (ty + 0.001);
+                    result.textureX = (px / 10 - Math.floor(px / 10))
+                } else {
+                    px += rx * (tx + 0.001);
+                    py += ry * (tx + 0.001);
+                    result.textureX = (py / 10 - Math.floor(py / 10))
+                }
+
+                result.dx = px - person.x;
+                result.dy = py - person.y;
             }
             return result;
 
@@ -119,7 +106,7 @@
 
             for (var j = 0; j < map.length; j++) {
                 for (var i = 0; i < map[j].length; i++) {
-                    if (map[j][i] == "#") {
+                    if (map[j][i] != ".") {
                         ctx.fillStyle = "red";
                     } else {
                         ctx.fillStyle = "white";
@@ -140,7 +127,7 @@
             ctx.stroke();
         }
 
-        function getWall(result, x) {
+        function getWallHeight(result, x) {
             var du = Math.atan(x);
             var len = Math.sqrt(result.dx * result.dx + result.dy * result.dy);
             return 5 / len / Math.cos(du);
@@ -166,31 +153,35 @@
                 var x = i / (canvas.width / 2) - 1;
                 var result = rayCast(x);
                 drawOnMap(result);
-                var wall = getWall(result, x);
+                var wallHeight = getWallHeight(result, x);
 
-                if (wall != null) {
-                    var y1 = (-wall + 1) * (canvas.height / 2);
-                    var y2 = (wall + 1) * (canvas.height / 2);
+                var y1 = (-wallHeight + 1) * (canvas.height / 2);
+                var y2 = (wallHeight + 1) * (canvas.height / 2);
 
-                    var len = Math.sqrt(result.dx * result.dx + result.dy * result.dy);
-                    var a = len / 80;
-                    if (a < 0.99) {
-                        var t_x = Math.round(result.textureX * (img.width - 1));
-                        ctx.drawImage(img,
+                var len = Math.sqrt(result.dx * result.dx + result.dy * result.dy);
+                var alpha = len / 80;
+                if (alpha < 0.999) {
+                    var t_x = Math.round(result.textureX * (img.width - 1));
+                    var cimg
+                    if (result.char == '#') {
+                        cimg = img;
+                    } else {
+                        cimg = wood;
+                    }
+                    ctx.drawImage(cimg,
                             t_x, 0, 1, img.height,
                             i, y1, 1, y2 - y1);
 
-                        ctx.drawImage(img2,
-                                t_x, 0, 1, img.height,
-                                i, y2, 1, y2 - y1);
-                    }
-
-
-                    if (a > 0.01) {
-                        ctx.fillStyle = "rgba(0, 0, 0, " + a + ")";
-                        ctx.fillRect(i, y1, 1, (y2 - y1) * 2 + 1);
-                    }
+                    //ctx.drawImage(img2,
+                    //        t_x, 0, 1, img.height,
+                    //        i, y2, 1, y2 - y1);
                 }
+
+                if (alpha > 0.001) {
+                    ctx.fillStyle = "rgba(0, 0, 0, " + alpha + ")";
+                    ctx.fillRect(i, y1, 1, (y2 - y1) * 2 + 1);
+                }
+
 
             }
         }
@@ -200,7 +191,7 @@
         }, false);
 
         function movePerson(x, y) {
-            if (map[Math.floor(y / 10)][Math.floor(x / 10)] != '#') {
+            if (map[Math.floor(y / 10)][Math.floor(x / 10)] == '.') {
                 person.x = x;
                 person.y = y;
             }
