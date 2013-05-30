@@ -1,7 +1,7 @@
 
 <html>
 <head>
-    <title>Render</title>
+    <title>3D maze render</title>
     <style type="text/css">
         html, body {
             width: 100%;
@@ -47,14 +47,13 @@
         var sky = new Image();
         sky.src = 'sky.jpg';
 
-        function updateResult(result, dx, dy, color, texture) {
+        function updateResult(result, dx, dy, texture) {
             var len_old = result.dx * result.dx + result.dy * result.dy;
             var len_new = dx * dx + dy * dy;
             if (len_new < len_old) {
                 result.dx = dx;
                 result.dy = dy;
-                result.color = color;
-                result.texture = texture / 10 - Math.floor(texture / 10);
+                result.textureX = texture / 10 - Math.floor(texture / 10);
             }
         }
 
@@ -66,10 +65,7 @@
             var result = {
                 dx: rx * 200,
                 dy: ry * 200,
-                rx: rx,
-                ry: ry,
-                color: "black",
-                texture: 0
+                textureX: 0
             };
 
             for (var j = 0; j < map.length; j++) {
@@ -80,7 +76,7 @@
                             var ix = rx / ry * line_y + person.x;
 
                             if (ix > i * 10 - 0.001 && ix <= i * 10 + 10 + 0.001) {
-                                updateResult(result, line_y / ry * rx, line_y, "green", i * 10 + 10 - ix);
+                                updateResult(result, line_y / ry * rx, line_y, i * 10 + 10 - ix);
                             }
                         }
 
@@ -89,7 +85,7 @@
                             var ix = rx / ry * line_y + person.x;
 
                             if (ix > i * 10 && ix <= i * 10 + 10 + 0.001) {
-                                updateResult(result, line_y / ry * rx, line_y, "orange", i * 10 + 10 - ix);
+                                updateResult(result, line_y / ry * rx, line_y, i * 10 + 10 - ix);
                             }
                         }
 
@@ -98,16 +94,16 @@
                             var iy = ry / rx * line_x + person.y;
 
                             if (iy > j * 10 && iy <= j * 10 + 10 + 0.001) {
-                                updateResult(result, line_x, line_x / rx * ry, "yellow", j * 10 + 10 - iy);
+                                updateResult(result, line_x, line_x / rx * ry, j * 10 + 10 - iy);
                             }
                         }
 
-                        var line_x = (i + 1) * 10 - person.x;
+                        line_x = (i + 1) * 10 - person.x;
                         if (line_x * rx > 0) {
                             var iy = ry / rx * line_x + person.y;
 
                             if (iy > j * 10 && iy <= j * 10 + 10 + 0.001) {
-                                updateResult(result, line_x, line_x / rx * ry, "magenta", j * 10 + 10 - iy);
+                                updateResult(result, line_x, line_x / rx * ry, j * 10 + 10 - iy);
                             }
                         }
                     }
@@ -119,6 +115,7 @@
 
         function drawMap() {
             var ctx = document.getElementById("map").getContext("2d");
+            var blockSize = 20;
 
             for (var j = 0; j < map.length; j++) {
                 for (var i = 0; i < map[j].length; i++) {
@@ -127,7 +124,7 @@
                     } else {
                         ctx.fillStyle = "white";
                     }
-                    ctx.fillRect(i * 20, j * 20, 20, 20);
+                    ctx.fillRect(i * blockSize, j * blockSize, blockSize, blockSize);
                 }
             }
 
@@ -149,16 +146,19 @@
             return 5 / len / Math.cos(du);
         }
 
-        function drawScene() {
+        function drawSky(ctx, canvas) {
+            var dx = -person.a * 50 / sky.width;
+            dx = dx - Math.floor(dx);
+            ctx.drawImage(sky, dx * canvas.width - canvas.width, 0, canvas.width, canvas.width);
+            ctx.drawImage(sky, dx * canvas.width, 0, canvas.width, canvas.width);
+        }
+
+        function drawAll() {
             drawMap();
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
 
-            var dx = -person.a * 50 / sky.width ;
-            dx = dx - Math.floor(dx);
-            ctx.drawImage(sky, dx * canvas.width - canvas.width, 0, canvas.width, canvas.width);
-            ctx.drawImage(sky, dx * canvas.width, 0,canvas.width, canvas.width);
-
+            drawSky(ctx, canvas);
             ctx.fillStyle = "black";
             ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
@@ -173,9 +173,9 @@
                     var y2 = (wall + 1) * (canvas.height / 2);
 
                     var len = Math.sqrt(result.dx * result.dx + result.dy * result.dy);
-                    var a = len / 60;
+                    var a = len / 80;
                     if (a < 0.99) {
-                        var t_x = Math.round(result.texture * (img.width - 1));
+                        var t_x = Math.round(result.textureX * (img.width - 1));
                         ctx.drawImage(img,
                             t_x, 0, 1, img.height,
                             i, y1, 1, y2 - y1);
@@ -196,33 +196,34 @@
         }
 
         window.addEventListener("load", function (event) {
-            drawScene();
+            drawAll();
         }, false);
+
+        function movePerson(x, y) {
+            if (map[Math.floor(y / 10)][Math.floor(x / 10)] != '#') {
+                person.x = x;
+                person.y = y;
+            }
+        }
 
         window.addEventListener('keydown', function(event) {
             switch (event.keyCode) {
                 case 37: // Left
                     person.a -= 0.1;
-                    drawScene();
                     break;
-
                 case 38: // Up
-                    person.x += Math.cos(person.a);
-                    person.y += Math.sin(person.a);
-                    drawScene();
+                    movePerson(person.x + Math.cos(person.a),
+                               person.y + Math.sin(person.a));
                     break;
-
                 case 39: // Right
                     person.a += 0.1;
-                    drawScene();
                     break;
-
                 case 40: // Down
-                    person.x -= Math.cos(person.a);
-                    person.y -= Math.sin(person.a);
-                    drawScene();
+                    movePerson(person.x - Math.cos(person.a),
+                               person.y - Math.sin(person.a));
                     break;
             }
+            drawAll();
         }, false);
     </script>
 </head>
@@ -231,7 +232,9 @@
 <h1>3D maze</h1>
 
 <canvas id="canvas" width="400" height="400"></canvas>
-<canvas id="map" width="400" height="400"></canvas>
+<canvas id="map" width="400" height="400"></canvas><br/>
+    Move by arrow keys.
 </div >
+
 </body>
 </html>
