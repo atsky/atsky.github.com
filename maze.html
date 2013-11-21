@@ -231,7 +231,7 @@
         }
 
         function drawAll() {
-            drawMap();
+            //drawMap();
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
 
@@ -246,7 +246,7 @@
                 var x = i / (canvas.width / 2) - 1;
                 var result = rayCast(x);
                 zbuffer[i] = calcProjection(result.dx + person.x , result.dy + person.y, 0).z
-                drawOnMap(result);
+                //drawOnMap(result);
                 var wallHeight = getWallHeight(result, x);
 
                 var y1 = (-wallHeight + 1) * (canvas.height / 2);
@@ -295,7 +295,7 @@
         function calcProjection(x, y, z) {
             x = x - person.x
             y = y - person.y
-            var z = Math.sin(person.a) * y + Math.cos(person.a) * x
+            z = Math.sin(person.a) * y + Math.cos(person.a) * x
 
 
             return {
@@ -310,7 +310,7 @@
         }, false);
 
         function movePerson(x, y) {
-            if (map[Math.floor(y)][Math.floor(x)] != "  #") {
+            if (map[Math.floor(y)][Math.floor(x)] != "#") {
                 if (map[Math.floor(y)][Math.floor(x)] == "!") {
                     map[Math.floor(y)][Math.floor(x)] = "."
                 }
@@ -344,8 +344,7 @@
 <div align=center>
 <h1>3D maze</h1>
 
-<canvas id="canvas" width="400" height="400"></canvas>
-<canvas id="map" width="400" height="400"></canvas><br/>
+<canvas id="canvas" width="400" height="400"></canvas><br/>
     Move by arrow keys.
 </div >
 
