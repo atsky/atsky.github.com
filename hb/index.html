@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Happy Katze</title>
+
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="confety.js"></script>
+    <script>
+        function do_start() {
+            var fall_audio = new Audio('snd/swoosh.mp3');
+            fall_audio.play();
+
+            var text = document.getElementById("init-text");
+            var elem = document.getElementById("box");
+            var pos = -2000;
+            var id = setInterval(frame, 10);
+
+            function frame() {
+                if (pos >= 0) {
+                    clearInterval(id);
+                } else {
+                    pos += 100;
+                    elem.style.left = pos + 'px';
+                    text.style.left = (pos + 2000) + 'px';
+                }
+            }
+        }
+
+        function BufferLoader(context, urlList, callback) {
+            this.context = context;
+            this.urlList = urlList;
+            this.onload = callback;
+            this.bufferList = [];
+            this.loadCount = 0;
+        }
+
+        BufferLoader.prototype.loadBuffer = function (url, index) {
+            // Load buffer asynchronously
+            var request = new XMLHttpRequest();
+            request.open("GET", url, true);
+            request.responseType = "arraybuffer";
+
+            var loader = this;
+
+            request.onload = function () {
+                // Asynchronously decode the audio file data in request.response
+                loader.context.decodeAudioData(
+                    request.response,
+                    function (buffer) {
+                        if (!buffer) {
+                            alert('error decoding file data: ' + url);
+                            return;
+                        }
+                        loader.bufferList[index] = buffer;
+                        if (++loader.loadCount == loader.urlList.length)
+                            loader.onload(loader.bufferList);
+                    },
+                    function (error) {
+                        console.error('decodeAudioData error', error);
+                    }
+                );
+            };
+
+            request.onerror = function () {
+                alert('BufferLoader: XHR error');
+            };
+
+            request.send();
+        };
+
+        BufferLoader.prototype.load = function () {
+            for (var i = 0; i < this.urlList.length; ++i)
+                this.loadBuffer(this.urlList[i], i);
+        };
+
+        var play_ready = false;
+        var global_buffers = {};
+
+        function finishedLoading(bufferList) {
+            play_ready = true;
+            global_buffers['c5'] = bufferList[0];
+            global_buffers['d5'] = bufferList[1];
+            global_buffers['e5'] = bufferList[2];
+            global_buffers['f5'] = bufferList[3];
+            global_buffers['g5'] = bufferList[4];
+            global_buffers['a6'] = bufferList[5];
+            global_buffers['as6'] = bufferList[6];
+            global_buffers['c6'] = bufferList[7];
+
+            global_buffers['item_6'] = bufferList[8];
+            global_buffers['item_8'] = bufferList[9];
+            global_buffers['item_17'] = bufferList[10];
+            global_buffers['item_18'] = bufferList[11];
+            global_buffers['item_20'] = bufferList[12];
+            global_buffers['item_21'] = bufferList[13];
+            global_buffers['item_27'] = bufferList[14];
+            global_buffers['item_30'] = bufferList[15];
+            global_buffers['item_32'] = bufferList[16];
+        }
+
+        $(document).ready(function () {
+
+            $("#start").click(function() {
+                do_start()
+            });
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            context = new AudioContext();
+
+            bufferLoader = new BufferLoader(
+                context,
+                [
+                    'snd/c4.ogg',         // 0
+                    'snd/d4.ogg',         // 1
+                    'snd/e4.ogg',         // 2
+                    'snd/f4.ogg',         // 3
+                    'snd/g4.ogg',         // 4
+                    'snd/a5.ogg',         // 5
+                    'snd/as5.ogg',        // 6
+                    'snd/c5.ogg',         // 7
+
+                    'snd/item_6.mp3',     // 8
+                    'snd/item_8.mp3',     // 9
+                    'snd/item_17.mp3',    // 10
+                    'snd/item_18.mp3',    // 11
+                    'snd/item_20.mp3',    // 12
+                    'snd/item_21.mp3',    // 13
+                    'snd/item_27.mp3',    // 14
+                    'snd/item_30.mp3',    // 15
+                    'snd/item_32.mp3'     // 16
+                ],
+
+                finishedLoading
+            );
+
+            bufferLoader.load();
+
+            var firstTime = true;
+
+            $("#box").click(function () {
+                if (!play_ready) {
+                    return;
+                }
+
+                if (firstTime) {
+                    InitConfetti();
+                    firstTime = false;
+                } else {
+                    RestartConfetti();
+                }
+
+
+                $("#box").attr("src", "img/open.png");
+
+                play_ready = false;
+                var id = setInterval(frame, 110);
+                var smallStep = 0;
+                var step = 0;
+
+                data = [
+                    "C",  "C",   "D", "-",  "C", "-", "F", "-", "E", "-", "-",
+                    "C",  "C",   "D", "-",  "C", "-", "G", "-", "E", "-", "-",
+                    "C",  "C",  "+C", "-", "+A", "-", "F", "-", "D", "-", "-",
+                    "Ab", "Ab", "+A", "-",  "F", "-", "G", "-", "F", "-", "-"];
+
+                function frame() {
+                    var elem = document.getElementById("happy");
+                    if (elem.style.top != '0px') {
+                        elem.style.top = Math.min(-(data.length * 2 - smallStep) * 2, 0) + 'px';
+                    }
+                    smallStep++;
+                    if (smallStep % 3 != 0) {
+                        return
+                    }
+
+                    if (step >= data.length) {
+                        clearInterval(id);
+                        play_ready = true;
+
+                        DeactivateConfetti();
+                    } else {
+                        note = data[step];
+
+                        if (note != "-") {
+                            var source1 = context.createBufferSource();
+
+                            if (note == "C") {
+                                source1.buffer = global_buffers['c5'];
+                            }
+                            if (note == "D") {
+                                source1.buffer = global_buffers['d5'];
+                            }
+                            if (note == "E") {
+                                source1.buffer = global_buffers['e5'];
+                            }
+                            if (note == "F") {
+                                source1.buffer = global_buffers['f5'];
+                            }
+                            if (note == "G") {
+                                source1.buffer = global_buffers['g5'];
+                            }
+                            if (note == "+A") {
+                                source1.buffer = global_buffers['a6'];
+                            }
+                            if (note == "Ab") {
+                                source1.buffer = global_buffers['as6'];
+                            }
+                            if (note == "+C") {
+                                source1.buffer = global_buffers['item_6'];
+                            }
+                            source1.connect(context.destination);
+                            source1.start();
+
+                            var source2 = context.createBufferSource();
+
+                            if (note == "C") {
+                                source2.buffer = global_buffers['item_20'];
+                            }
+                            if (note == "D") {
+                                source2.buffer = global_buffers['item_17'];
+                            }
+                            if (note == "E") {
+                                source2.buffer = global_buffers['item_21'];
+                            }
+                            if (note == "F") {
+                                source2.buffer = global_buffers['item_21'];
+                            }
+                            if (note == "G") {
+                                source2.buffer = global_buffers['item_6'];
+                            }
+                            if (note == "+A") {
+                                source2.buffer = global_buffers['item_8'];
+                            }
+                            if (note == "Ab") {
+                                source2.buffer = global_buffers['item_30'];
+                            }
+                            if (note == "+C") {
+                                source2.buffer = global_buffers['item_27'];
+                            }
+
+                            var gainNode = context.createGain();
+                            source2.connect(gainNode);
+                            gainNode.connect(context.destination);
+                            gainNode.gain.value = 0.5;
+                            source2.start();
+                        }
+
+                        step += 1;
+
+
+                    }
+                }
+            });
+        });
+    </script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        div {
+            position: relative;
+            height: 100%;
+            width: 100%;
+        }
+
+        .happy-img {
+            position: absolute;
+            top: -2000px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin-left: auto;
+            margin-right: auto;
+            z-index: 1;
+        }
+
+        .box-img {
+            position: absolute;
+            top: 100px;
+            left: -2000px;
+            right: 0;
+            bottom: 0;
+            margin-left: auto;
+            margin-right: auto;
+
+            transition: all .2s ease-in-out;
+        }
+
+        .init-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 50%;
+            height: 50%;
+            text-align: center;
+            vertical-align: middle;
+            font-family: 'Helvetica Neue', sans-serif;
+            font-size: 25px;
+            margin: auto;
+        }
+
+        canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: -1;
+        }
+
+        .box-img:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body background="img/bg3.png">
+<div>
+    <img id="happy" class="happy-img" src="img/happy.png">
+    <img id="box" class="box-img" src="img/closed.png">
+    <div id="init-text" class="init-text">
+        <p>Небольшое виртульное поздравление для моей любимой зайки</p>
+        <p>Не забудь включить звук!</p>
+        <p><a id="start" href="#">Далее</a></p>
+    </div>
+</div>
+<canvas id="canvas"></canvas>
+</body>
+</html>
