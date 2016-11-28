@@ -11,18 +11,17 @@
             var fall_audio = new Audio('snd/swoosh.mp3');
             fall_audio.play();
 
-            var text = document.getElementById("init-text");
+            $("#init-text").remove();
             var elem = document.getElementById("box");
-            var pos = -2000;
+            var pos = -200;
             var id = setInterval(frame, 10);
 
             function frame() {
                 if (pos >= 0) {
                     clearInterval(id);
                 } else {
-                    pos += 100;
-                    elem.style.left = pos + 'px';
-                    text.style.left = (pos + 2000) + 'px';
+                    pos += 10;
+                    elem.style.left = pos + '%';
                 }
             }
         }
@@ -165,8 +164,8 @@
 
                 function frame() {
                     var elem = document.getElementById("happy");
-                    if (elem.style.top != '0px') {
-                        elem.style.top = Math.min(-(data.length * 2 - smallStep) * 2, 0) + 'px';
+                    if (elem.style.top != '0%') {
+                        elem.style.top = Math.min(-(data.length * 2 - smallStep) / 4, 10) + '%';
                     }
                     smallStep++;
                     if (smallStep % 3 != 0) {
@@ -269,7 +268,7 @@
 
         .happy-img {
             position: absolute;
-            top: -2000px;
+            top: -200%;
             left: 0;
             right: 0;
             bottom: 0;
@@ -280,12 +279,13 @@
 
         .box-img {
             position: absolute;
-            top: 100px;
-            left: -2000px;
+            top: 20%;
+            left: -200%;
             right: 0;
             bottom: 0;
             margin-left: auto;
             margin-right: auto;
+            overflow: hidden;
 
             transition: all .2s ease-in-out;
         }
@@ -303,6 +303,7 @@
             font-family: 'Helvetica Neue', sans-serif;
             font-size: 25px;
             margin: auto;
+            overflow: hidden;
         }
 
         canvas {
@@ -322,7 +323,7 @@
     <img id="happy" class="happy-img" src="img/happy.png">
     <img id="box" class="box-img" src="img/closed.png">
     <div id="init-text" class="init-text">
-        <p>Небольшое виртульное поздравление для моей любимой зайки</p>
+        <p>Виртуальное поздравление для моей любимой зайки</p>
         <p>Не забудь включить звук!</p>
         <p><a id="start" href="#">Далее</a></p>
     </div>
